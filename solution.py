@@ -45,19 +45,19 @@ class ActorCriticController:
         with self.tape:
             # wszystko co dzieje się w kontekście danej taśmy jest zapisywane i może posłużyć do późniejszego wyliczania pożądanych gradientów
             # TODO: tu trzeba wybrać odpowiednią akcję korzystając z aktora
-            probabilities = self.model(state)[0][0]
+            probabilities = self.predict(state)[0]
             distribution = tfp.distributions.Categorical(probs=probabilities)
             action = int(distribution.sample(1)) # Czy aby na pewno sample? Nie lepiej wybrać akcję z największym probablility?
             # ODP NIE, W treści polecenia: pomocnicza klasa, która pozwoli
             # potraktować wartości zwracana przez aktora jak politykę i losować ak1
             # cję do wykonania zgodnie z aktualnym rozkładem ich prawdopodobieństwa;
 
-            self.log_action_probability = np.log(probabilities[action])   # TODO: tu trzeba zapisać do późniejszego wykorzystania logarytm prawdopodobieństwa wybrania uprzednio wybranej akcji (będzie nam potrzebny by policzyć stratę aktora)
+            self.log_action_probability = tf.math.log(probabilities[action])   # TODO: tu trzeba zapisać do późniejszego wykorzystania logarytm prawdopodobieństwa wybrania uprzednio wybranej akcji (będzie nam potrzebny by policzyć stratę aktora)
         return int(action)
 
     def predict(self,state):
         output = self.model(state)
-        return [np.reshape(output[0], -1),np.reshape(output[1], -1)]
+        return [tf.reshape(output[0], -1),tf.reshape(output[1], -1)]
 
     # noinspection PyTypeChecker
     def learn(self, state: np.ndarray, reward: float, new_state: np.ndarray, terminal: bool) -> None:
@@ -70,10 +70,9 @@ class ActorCriticController:
             # TODO: tu trzeba obliczyć błąd wartościowania aktualnego krytyka
             error = None
             if state is not terminal:
-                error = reward + self.discount_factor * float((self.model(new_state)[1]).numpy()) - self.model.predict(state)[1]
+                error = reward + self.discount_factor * float((self.predict(new_state)[1]).numpy()) - self.predict(state)[1]
             else:
-                error = reward + self.discount_factor - self.model(state)[1]
-            error = None
+                error = reward + self.discount_factor - self.predict(state)[1]
             self.last_error_squared = float(error) ** 2
 
             L_actor = - float(error.numpy()) * self.log_action_probability
