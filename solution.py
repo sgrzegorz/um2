@@ -66,6 +66,7 @@ class ActorCriticController:
 
         self.tape = tf.GradientTape()
         with self.tape:
+            self.tape.watch(self.model.trainable_weights)
             # wszystko co dzieje się w kontekście danej taśmy jest zapisywane i może posłużyć do późniejszego wyliczania pożądanych gradientów
             # TODO: tu trzeba wybrać odpowiednią akcję korzystając z aktora
             probabilities = self.predict(state)[0]
@@ -91,8 +92,8 @@ class ActorCriticController:
             # wszystko co dzieje się w kontekście danej taśmy jest zapisywane i może posłużyć do późniejszego wyliczania pożądanych gradientów
 
             # TODO: tu trzeba obliczyć błąd wartościowania aktualnego krytyka
-            error = None
-            if state is not terminal:
+            error = -999999
+            if not terminal:
                 error = reward + self.discount_factor * float((self.predict(new_state)[1]).numpy()) - self.predict(state)[1]
             else:
                 error = reward + self.discount_factor - self.predict(state)[1]
