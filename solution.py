@@ -18,25 +18,6 @@ class ActorCriticController:
         self.tape: Optional[tf.GradientTape] = None  # zmienna pomocnicza, związana z działaniem frameworku
         self.last_error_squared: float = 0.0  # zmienna używana do wizualizacji wyników
 
-    @staticmethod
-    def create_actor_critic_model() -> tf.keras.Model:
-        # TODO: przygotuj potrzebne warstwy sieci neuronowej o odpowiednich aktywacjach i rozmiarach
-        H1 =1024
-        H2 = 256
-        ACTIONS_SHAPE = 2 # left right
-        STATE_SHAPE = 4
-
-
-        input = Input(shape=(STATE_SHAPE,))  # wejście to pojedynczy stan
-        layer_1 = Dense(H1, activation='relu')(input)
-        layer_norm = LayerNormalization()(layer_1)
-        layer_2 = Dense(H2, activation='relu')(layer_norm)
-        layer_norm_2 = LayerNormalization()(layer_2)
-
-        output1 = Dense(ACTIONS_SHAPE, activation='softmax')(layer_norm_2)
-        output2 = Dense(1, activation='linear')(layer_norm_2)
-
-        return tf.keras.Model(inputs=input, outputs=[output1,output2])
     # @staticmethod
     # def create_actor_critic_model() -> tf.keras.Model:
     #     # TODO: przygotuj potrzebne warstwy sieci neuronowej o odpowiednich aktywacjach i rozmiarach
@@ -51,15 +32,34 @@ class ActorCriticController:
     #     layer_norm = LayerNormalization()(layer_1)
     #     layer_2 = Dense(H2, activation='relu')(layer_norm)
     #     layer_norm_2 = LayerNormalization()(layer_2)
-    #     output1 = Dense(ACTIONS_SHAPE, activation='softmax')(layer_norm_2)
     #
-    #     layerA_1 = Dense(H1, activation='relu')(input)
-    #     layerA_norm = LayerNormalization()(layerA_1)
-    #     layerA_2 = Dense(H2, activation='relu')(layerA_norm)
-    #     layerA_norm_2 = LayerNormalization()(layerA_2)
-    #     output2 = Dense(1, activation='linear')(layerA_norm_2)
+    #     output1 = Dense(ACTIONS_SHAPE, activation='softmax')(layer_norm_2)
+    #     output2 = Dense(1, activation='linear')(layer_norm_2)
     #
     #     return tf.keras.Model(inputs=input, outputs=[output1,output2])
+    @staticmethod
+    def create_actor_critic_model() -> tf.keras.Model:
+        # TODO: przygotuj potrzebne warstwy sieci neuronowej o odpowiednich aktywacjach i rozmiarach
+        H1 =1024
+        H2 = 256
+        ACTIONS_SHAPE = 4
+        STATE_SHAPE = 8
+
+
+        input = Input(shape=(STATE_SHAPE,))  # wejście to pojedynczy stan
+        layer_1 = Dense(H1, activation='relu')(input)
+        layer_norm = LayerNormalization()(layer_1)
+        layer_2 = Dense(H2, activation='relu')(layer_norm)
+        layer_norm_2 = LayerNormalization()(layer_2)
+        output1 = Dense(ACTIONS_SHAPE, activation='softmax')(layer_norm_2)
+
+        layerA_1 = Dense(H1, activation='relu')(input)
+        layerA_norm = LayerNormalization()(layerA_1)
+        layerA_2 = Dense(H2, activation='relu')(layerA_norm)
+        layerA_norm_2 = LayerNormalization()(layerA_2)
+        output2 = Dense(1, activation='linear')(layerA_norm_2)
+
+        return tf.keras.Model(inputs=input, outputs=[output1,output2])
 
     def choose_action(self, state: np.ndarray) -> int:
         state = self.format_state(state)  # przygotowanie stanu do formatu akceptowanego przez framework
@@ -112,12 +112,12 @@ class ActorCriticController:
 
 
 def main() -> None:
-    environment = gym.make('CartPole-v1')  # zamień na gym.make('LunarLander-v2') by zająć się lądownikiem
-    controller = ActorCriticController(environment, 0.00001, 0.99)
+    environment = gym.make('LunarLander-v2')  # zamień na gym.make('LunarLander-v2') by zająć się lądownikiem
+    controller = ActorCriticController(environment, 0.000005, 0.99)
 
     past_rewards = []
     past_errors = []
-    for i_episode in tqdm(range(2000)):  # tu decydujemy o liczbie epizodów
+    for i_episode in tqdm(range(3000)):  # tu decydujemy o liczbie epizodów
         done = False
         state = environment.reset()
         reward_sum = 0.0
